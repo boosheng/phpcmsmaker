@@ -1,4 +1,5 @@
 phpcmsmaker
 ===========
 
-for phpcms module creat
+For phpcms module auto creat
+
