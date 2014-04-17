@@ -3,40 +3,45 @@
  * modules auto maker tools
  * this in sample modules for quickly create new modules
  */
-$db = mysql_connect("localhost","root","icanfly1983");
-$link = mysql_select_db("phpcms2");
 
+$dbconfig = include '../../../caches/configs/database.php';
+$db = mysql_connect($dbconfig['default']['hostname'],$dbconfig['default']['root'],$dbconfig['default']['password']);
+$link = mysql_select_db($dbconfig['default']['database']);
 
+//admin menuitems
 $config = array("tablename1"=>array("showcolumn"=>array("a","b"),"op"=>array("add","edit","del","changestat")),
 				"tablename2"=>array("showcolumn"=>array("a","b"),"op"=>array("add","edit","del","changestat")));
 
 
 
 
+
+
+
+//front menuitems
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //$tpl = $argv[1];
 //$tables = explode(",",$argv[2]);
+
+//tables configs
 $tables = array("mg_action",
-"mg_action_tpl",
-"mg_character",
-"mg_character_tpl",
-"mg_dev",
-"mg_dev_log",
-"mg_event",
-"mg_event_tpl",
-"mg_item",
-"mg_item_tpl",
-"mg_map",
-"mg_map_tpl",
-"mg_online",
-"mg_rule",
-"mg_rule_tpl",
-"mg_scene",
-"mg_scene_tpl",
-"mg_story",
-"mg_story_tpl",
 "mg_tpl");
 foreach($tables as $key=>$val){
-	maker($val);
+	make($val);
+	//make_menu($arr);
 }
 
 mysql_close($db);
@@ -45,7 +50,7 @@ mysql_close($db);
  * step 2,create action
  * step 3,create view
  */
-function maker($table){
+function make($table){
 	global $db;
 	$str = str_replace("tpl", "{$table}", file_get_contents("./tpl_model.class.php"));
 	file_put_contents("../../model/".$table."_model.class.php", $str);
