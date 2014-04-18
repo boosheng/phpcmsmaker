@@ -7,7 +7,8 @@
 $dbconfig = include '../../../caches/configs/database.php';
 $db = mysql_connect($dbconfig['default']['hostname'],$dbconfig['default']['root'],$dbconfig['default']['password']);
 $link = mysql_select_db($dbconfig['default']['database']);
-
+$config['module']['name']="test";
+$config['module']['ename']="test";
 //admin menuitems
 $config = array("tablename1"=>array("showcolumn"=>array("a","b"),"op"=>array("add","edit","del","changestat")),
 				"tablename2"=>array("showcolumn"=>array("a","b"),"op"=>array("add","edit","del","changestat")));
@@ -52,6 +53,7 @@ mysql_close($db);
  */
 function make($table){
 	global $db;
+	$mpath = "";
 	$str = str_replace("tpl", "{$table}", file_get_contents("./tpl_model.class.php"));
 	file_put_contents("../../model/".$table."_model.class.php", $str);
 	
@@ -113,3 +115,19 @@ function make_menu($arr){
 	
 }
 
+//生成前台功能
+function make_front($arr){
+	global $db;
+	$mpath = "";
+	//替换index.php程序,生成功能
+	$str = str_replace("tpl", "{$table}", file_get_contents("./index.php"));
+	//生成相应模板
+	file_put_contents("../../templates/".$config['module']['ename']."/".$table."_add.html", $str);
+	file_put_contents("../../templates/".$config['module']['ename']."/".$table."_edit.html", $str);
+	file_put_contents("../../templates/".$config['module']['ename']."/".$table."_init.html", $str);
+	file_put_contents("../../templates/".$config['module']['ename']."/".$table."_list.html", $str);
+	$str = str_replace("tpl_list", "{$table}_list", file_get_contents("tpl_action.php"));
+	$str = str_replace("tpl_add", "{$table}_add", $str);
+	$str = str_replace("tpl_edit", "{$table}_edit", $str);
+	$str = str_replace("tpl_init", "{$table}_init", $str);
+}
