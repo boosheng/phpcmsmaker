@@ -1,95 +1,88 @@
 <?php
+/**
+ * 会员前台管理中心、账号管理、收藏操作类
+ */
+
 defined('IN_PHPCMS') or exit('No permission resources.');
-class index {
-	private $setting, $catid, $contentid, $siteid, $mood_id;
-	public function __construct() {
-		$this->setting = getcache('mood_program', 'commons');
-		
-		
-		$this->mood_id = isset($_GET['id']) ? $_GET['id'] : '';
-		if(!preg_match("/^[a-z0-9_\-]+$/i",$this->mood_id)) showmessage((L('illegal_parameters')));
-		if (empty($this->mood_id)) {
-			showmessage(L('id_cannot_be_empty'));
-		}
-		list($this->catid, $this->contentid, $this->siteid) = id_decode($this->mood_id);
-		
-		$this->setting = isset($this->setting[$this->siteid]) ? $this->setting[$this->siteid] : array();
-		
-		foreach ($this->setting as $k=>$v) {
-			if (empty($v['use'])) unset($this->setting[$k]);
-		}
-		
-		define('SITEID', $this->siteid);
-	}
+pc_base::load_app_class('foreground');
+pc_base::load_sys_class('format', '', 0);
+pc_base::load_sys_class('form', '', 0);
+
+class index_db extends foreground {
+
+	private $times_db;
 	
-	//显示心情
+	function __construct() {
+		parent::__construct();
+		$this->_username = param::get_cookie('_username');
+		$this->_userid = param::get_cookie('_userid');
+		$this->_groupid = get_memberinfo($this->_userid,'groupid');
+		$this->http_user_agent = $_SERVER['HTTP_USER_AGENT'];
+		$this->index_db = pc_base::load_model('index_db_model');
+	}
+
 	public function init() {
-		$mood_id =& $this->mood_id;
-		$setting =& $this->setting;
-		$mood_db = pc_base::load_model('mood_model');
-		$data = $mood_db->get_one(array('catid'=>$this->catid, 'siteid'=>$this->siteid, 'contentid'=>$this->contentid));
-		foreach ($setting as $k=>$v) {
-			$setting[$k]['fields'] = 'n'.$k;
-			if (!isset($data[$setting[$k]['fields']])) $data[$setting[$k]['fields']] = 0;
-			if (isset($data['total']) && !empty($data['total'])) {
-				$setting[$k]['per'] = ceil(($data[$setting[$k]['fields']]/$data['total']) * 60);
-			} else {
-				$setting[$k]['per'] = 0;
-			}
-		}
-		ob_start();
-		include template('mood', 'index');
-		$html = ob_get_contents();
-		ob_clean();
-		echo format_js($html);
+		$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+		$where = array('id'=>$this->_username,'replyid'=>'0');
+ 		$infos = $this->index_db->listinfo($where,$order = 'id DESC',$page, 10);
+ 		$infos = new_html_special_chars($infos);
+ 		$pages = $this->index_db->pages;
+		include template('{{module}}', 'index_db_init');
 	}
 	
-	//提交选中
-	public function post() {
-		if (isset($_GET['callback']) && !preg_match('/^[a-zA-Z_][a-zA-Z0-9_]+$/', $_GET['callback']))  unset($_GET['callback']);
-		$mood_id =& $this->mood_id;
-		$setting =& $this->setting;
-		$cookies = param::get_cookie('mood_id');
-		$cookie = explode(',', $cookies);
-		if (in_array($this->mood_id, $cookie)) {
-			$this->_show_result(0, L('expressed'));
-		} else {
-			$mood_db = pc_base::load_model('mood_model');
-			$key = isset($_GET['k']) && intval($_GET['k']) ? intval($_GET['k']) : '';
-			$fields = 'n'.$key;
-			if ($data = $mood_db->get_one(array('catid'=>$this->catid, 'siteid'=>$this->siteid, 'contentid'=>$this->contentid))) {
-				$mood_db->update(array('total'=>'+=1', $fields=>'+=1', 'lastupdate'=>SYS_TIME), array('id'=>$data['id']));
-				$data['total']++;
-				$data[$fields]++;
-			} else {
-				$mood_db->insert(array('total'=>'1', $fields=>'1', 'catid'=>$this->catid, 'siteid'=>$this->siteid, 'contentid'=>$this->contentid,'
-				lastupdate'=>SYS_TIME));
-				$data['total'] = 1;
-				$data[$fields] = 1;
+//自动生成函数，crud  table_index.php	
+//{{function}}
+	public function add(){
+		if($_POST){
+			$data = $_POST;
+			if($this->index_db->insert($data)){
+				showmessage(L('operation_success'),HTTP_REFERER);
+			}else{
+				showmessage("添加失败，请重试！",HTTP_REFERER);
 			}
-			param::set_cookie('mood_id', $cookies.','.$mood_id);
-			foreach ($setting as $k=>$v) {
-				$setting[$k]['fields'] = 'n'.$k;
-				if (!isset($data[$setting[$k]['fields']])) $data[$setting[$k]['fields']] = 0;
-				if (isset($data['total']) && !empty($data['total'])) {
-					$setting[$k]['per'] = ceil(($data[$setting[$k]['fields']]/$data['total']) * 60);
-				} else {
-					$setting[$k]['per'] = 0;
-				}
-			}
-			ob_start();
-			include template('mood', 'index');
-			$html = ob_get_contents();
-			ob_clean();
-			$this->_show_result(1,$html);
+		}else{
+			include template('{{module}}', 'index_db_add');
 		}
 	}
 	
-	//显示AJAX结果
-	protected function _show_result($status = 0, $msg = '') {
-		if(CHARSET != 'utf-8') {
-			$msg = iconv(CHARSET, 'utf-8', $msg);
+	
+	public function edit(){
+		if($_POST){
+			$where = "id=".$_POST['id'];
+			unset($_POST['id']);
+			$data=$_POST;
+			$this->index_db->update($data,$where);
+		}else{
+			include template('{{module}}', 'index_db_edit');
 		}
-		exit(trim_script($_GET['callback']).'('.json_encode(array('status'=>$status, 'data'=>$msg)).')');
 	}
+	
+	//is ajax
+	public function del(){
+		if($_REQUEST['ajax']){
+			if($this->index_db->delete(array('id'=>intval($_REQUEST['id'])))){
+				echo json_encode("ok");
+			}
+		}else{
+			if($this->index_db->delete(array('id'=>intval($_REQUEST['id'])))){
+				showmessage(L('operation_success'),HTTP_REFERER);
+			}
+		}
+	}
+	
+	public function lists(){
+		$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+		$where = array('uid'=>$this->_userid,'stat'=>'1');
+ 		$infos = $this->index_db->listinfo($where,$order = 'id DESC',$page, 10);
+ 		$infos = new_html_special_chars($infos);
+ 		$pages = $this->index_db->pages;
+		include template('{{module}}', 'index_db_list');
+	}
+	
+	public function info(){
+		$infos = $this->index_db->get_one(array('id'=>intval($_REQUEST['id'])));
+		include template('{{module}}', 'index_db_info');
+	}
+	
 }
+?>
