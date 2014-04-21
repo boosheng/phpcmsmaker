@@ -37,6 +37,8 @@ while($row = mysql_fetch_array($res)){
 	make_front($tablename,$arr);
 	//菜单
 	//make_menu($arr);
+	//模块安装文件
+	make_module();
 	echo "The module is created!\n";
 }
 
