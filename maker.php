@@ -157,13 +157,23 @@ function make_front($table,$arr){
 		if($row['Type']!="text"){
 			$editstr .='<tr>
 			<th>'.$row['Field'].'：</th>
-			<td><input name="info['.$row['Field'].']" type="text" id="'.$row['Field'].'" size="30" value="<?php echo $row["'.$row['Field'].'"]?>"  class="input-text"/> </td>
-			</tr>';
-		}else{
-			$editstr .='<tr>
-			<th>'.$row['Field'].'：</th>
 			<td><textarea name="info['.$row['Field'].']" type="text" id="'.$row['Field'].'"  rows="5" cols="50"><?php echo $row["'.$row['Field'].'"]?></textarea> </td>
 			</tr>';
+
+		}else{
+			if(preg_match("time",$row['Field'])){
+				//time
+			}elseif (preg_match("varchar",$row['Type'])){
+				$editstr .='<tr>
+			<th>'.$row['Field'].'：</th>
+			<td><input name="info['.$row['Field'].']" type="text" id="'.$row['Field'].'" size="50" value="<?php echo $row["'.$row['Field'].'"]?>"  class="input-text"/> </td>
+			</tr>';
+			}else{
+				$editstr .='<tr>
+			<th>'.$row['Field'].'：</th>
+			<td><input name="info['.$row['Field'].']" type="text" id="'.$row['Field'].'" size="30" value="<?php echo $row["'.$row['Field'].'"]?>"  class="input-text"/> </td>
+			</tr>';
+			}
 		}
 	}
 	
