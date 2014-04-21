@@ -15,7 +15,7 @@ $configs = array("tablename1"=>array("showcolumn"=>array("a","b"),"op"=>array("a
 				"tablename2"=>array("showcolumn"=>array("a","b"),"op"=>array("add","edit","del","changestat")));
 
 
-
+$fmenu = array(array('name'=>"",'action'=>"",'file'=>''));
 
 
 
@@ -26,13 +26,7 @@ $configs = array("tablename1"=>array("showcolumn"=>array("a","b"),"op"=>array("a
 //$tables = explode(",",$argv[2]);
 
 //模型相关的表
-$tables = array("v9_ats_action",
-"v9_ats_diary",
-"v9_ats_event",
-"v9_ats_event_analysis",
-"v9_ats_event_common",
-"v9_ats_event_log",
-"v9_ats_target");
+$tables = array("ats_action");
 $res = mysql_query("show tables like '%".$config['module']['dbtag']."%'");
 while($row = mysql_fetch_array($res)){
 //foreach($tables as $key=>$val){
@@ -40,10 +34,10 @@ while($row = mysql_fetch_array($res)){
 	$tablename = str_replace($dbconfig['default']['tablepre'], "", $row[0]);
 	make($tablename);
 	//前台功能
-	//make_front($arr)
+	make_front($tablename,$arr);
 	//菜单
 	//make_menu($arr);
-	echo "Login with admin to refresh the system cache for test! The module is created!\n";
+	echo "The module is created!\n";
 }
 
 mysql_close($db);
@@ -136,15 +130,21 @@ function make_module(){
 
 //生成前台功能
 function make_front($table,$arr){
-	global $db,$config,$dbconfig;
+	global $db,$config,$dbconfig,$fmenu;
 	$mpath = "";
-	//替换index.php程序,生成功能
-	$str = str_replace("tpl", "{$table}", file_get_contents("./index.php"));
+	$res = mysql_query("SHOW COLUMNS FROM ".$dbconfig['default']['tablepre'].$table);
+	$tb=array();
+	$i=0;
+	while($row = mysql_fetch_array($res)){
+		
+	}
+	
+	
 	//生成相应模板
 	$str = file_get_contents("./left.html");
-	$replace = '<li {if ROUTE_A=="publish"} class="on"{/if}><a href="index.php?m=member&c=content&a=publish"><img src="{IMG_PATH}icon/m_2.png" width="14" height="15" /> {L(\'online_publish\')}</a></li>
-            <li {if ROUTE_A=="published"} class="on"{/if}><a href="index.php?m=member&c=content&a=published"><img src="{IMG_PATH}icon/m_3.png" width="14" height="16" /> {L(\'published_content\')}</a></li>
-	';
+	foreach($fmenu as $val){
+		$replace .= '<li {if ROUTE_A=="init"} class="on"{/if}><a href="'.$val['file'].'.php?m='.$config['module']['ename'].'&c='.$val['file'].'&a='.$val['action'].'"><img src="{IMG_PATH}icon/m_2.png" width="14" height="15" /> '.$val['name'].'</a></li>';
+	}
 	$str = str_replace("{{strmenu}}", $replace, $str);
 	file_put_contents("../../templates/default/".$config['module']['ename']."/left.html", $str);
 	$str = file_get_contents("./add.html");
@@ -159,11 +159,10 @@ function make_front($table,$arr){
 	file_put_contents("../../templates/default/".$config['module']['ename']."/".$table."_list.html", $str);
 	
 	//功能函数的生成
-	$str = str_replace("//{{function}}", $funstr, file_get_contents("index.php"));
+	//替换index.php程序,生成功能
+	$str = str_replace("index_db", "index_{$table}", file_get_contents("./index.php"));
+	//$str = str_replace("//{{function}}", $funstr, $str);
 	file_put_contents("../".$config['module']['ename']."/index_".$table.".php", $str);
-	$str = str_replace("tpl_add", "{$table}_add", $str);
-	$str = str_replace("tpl_edit", "{$table}_edit", $str);
-	$str = str_replace("tpl_init", "{$table}_init", $str);
 }
 
 

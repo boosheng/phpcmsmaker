@@ -1,1 +1,1 @@
-php ./maker.php
+php5 ./maker.php
