@@ -118,15 +118,15 @@ function make_menu($arr){
 	foreach($arr as $val){
 		$sql = "";
 	}
-	
-	
 }
 
 //生成模块安装程序
 function make_module(){
 	global $db,$config;
 	$str = file_get_contents("./install/config.inc.php");
-	$str = str_replace("mood", $config['module']['ename'], $str);
+	$str = str_replace("{{module}}", $config['module']['ename'], $str);
+	$str = str_replace("{{modulename}}", $config['module']['name'], $str);
+	$str = str_replace("{{introduce}}", $config['module']['name'], $str);
 	file_put_contents("../".$config['module']['ename']."/install/config.inc.php",$str);
 }
 
@@ -138,7 +138,33 @@ function make_front($table,$arr){
 	$tb=array();
 	$i=0;
 	while($row = mysql_fetch_array($res)){
+		$tb[$i]['name']=$row['Field'];
+		$tb[$i]['Type']=$row['Type'];//根据type选择需要的控件
+		$liststr .= "<th align='left'>".$row['Field']."</th>";
+		$liststr2 .= "<th align='left'><?php echo ".$row['Field'].";?></th>";
+		if($row['Type']!="text"){
+			$addstr .='<tr>
+			<th>'.$row['Field'].'：</th>
+			<td><input name="info['.$row['Field'].']" type="text" id="'.$row['Field'].'" size="30" value=""  class="input-text"/> </td>
+			</tr>';
+		}else{
+			$addstr .='<tr>
+			<th>'.$row['Field'].'：</th>
+			<td><textarea name="info['.$row['Field'].']" type="text" id="'.$row['Field'].'"  rows="5" cols="50"></textarea> </td>
+			</tr>';
+		}
 		
+		if($row['Type']!="text"){
+			$editstr .='<tr>
+			<th>'.$row['Field'].'：</th>
+			<td><input name="info['.$row['Field'].']" type="text" id="'.$row['Field'].'" size="30" value="<?php echo $row["'.$row['Field'].'"]?>"  class="input-text"/> </td>
+			</tr>';
+		}else{
+			$editstr .='<tr>
+			<th>'.$row['Field'].'：</th>
+			<td><textarea name="info['.$row['Field'].']" type="text" id="'.$row['Field'].'"  rows="5" cols="50"><?php echo $row["'.$row['Field'].'"]?></textarea> </td>
+			</tr>';
+		}
 	}
 	
 	
@@ -150,14 +176,22 @@ function make_front($table,$arr){
 	$str = str_replace("{{strmenu}}", $replace, $str);
 	file_put_contents("../../templates/default/".$config['module']['ename']."/left.html", $str);
 	$str = file_get_contents("./add.html");
+	$str = str_replace("{{addstr}}", $addstr, $str);
 	file_put_contents("../../templates/default/".$config['module']['ename']."/".$table."_add.html", $str);
 	$str = file_get_contents("./info.html");
+	$str = str_replace("{{infostr}}", $editstr, $str);
 	file_put_contents("../../templates/default/".$config['module']['ename']."/".$table."_info.html", $str);
 	$str = file_get_contents("./edit.html");
+	$str = str_replace("{{editstr}}", $editstr, $str);
 	file_put_contents("../../templates/default/".$config['module']['ename']."/".$table."_edit.html", $str);
 	$str = file_get_contents("./init.html");
+	//{{topliststr}} {{liststr}}
+	$str = str_replace("{{topliststr}}", $liststr, $str);
+	$str = str_replace("{{liststr}}", $liststr2, $str);
 	file_put_contents("../../templates/default/".$config['module']['ename']."/".$table."_init.html", $str);
 	$str = file_get_contents("./list.html");
+	$str = str_replace("{{topliststr}}", $liststr, $str);
+	$str = str_replace("{{liststr}}", $liststr2, $str);
 	file_put_contents("../../templates/default/".$config['module']['ename']."/".$table."_list.html", $str);
 	
 	//功能函数的生成
